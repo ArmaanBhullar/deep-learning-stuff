@@ -7,6 +7,10 @@ print(f"All model available - {dir(torchvision.models)}")
 
 # Load the ResNet Model
 resnet = torchvision.models.resnet101(pretrained=True)
+# Put the network in eval model, If we forget to do that, some pretrained models, like batch normalization and dropout,
+# will not produce meaningful answers, just because of the way they work internally.
+# Now that eval has been set, we’re ready for inference:
+resnet.eval()
 
 # Create a preprocessor
 preprocess = transforms.Compose([
@@ -18,15 +22,10 @@ preprocess = transforms.Compose([
         std=[0.229, 0.224, 0.225]
     )]) # Predefined values as used in training of the Resnet model
 
-img = Image.open("D:\\dog_1.jpg")
+img = Image.open("./data/dog_1.jpg")
 img_t = preprocess(img=img)
 
 batch_t = torch.unsqueeze(img_t, 0)
-
-# Put the network in eval model, If we forget to do that, some pretrained models, like batch normalization and dropout,
-# will not produce meaningful answers, just because of the way they work internally.
-# Now that eval has been set, we’re ready for inference:
-resnet.eval()
 
 out = resnet(batch_t)
 
