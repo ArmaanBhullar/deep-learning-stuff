@@ -89,7 +89,7 @@ netG.eval()
 preprocess = transforms.Compose([transforms.Resize(256),
                                  transforms.ToTensor()])
 
-img = Image.open("./data/horse.jpg")
+img = Image.open("./data/lion.jpg")
 
 img_t = preprocess(img=img)
 
@@ -100,4 +100,4 @@ batch_out = netG(batch_t)
 out_t = (batch_out.data.squeeze() + 1)/2
 out_img = transforms.ToPILImage()(out_t)
 
-out_img.save("./data/outputs/zebra.png")
+out_img.save("./data/outputs/lion_to_zebra.png")
