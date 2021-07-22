@@ -11,9 +11,6 @@ repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v3.2.0
     hooks:
-    -   id: check-byte-order-marker  # Forbid UTF-8 byte-order markers
-    # Check for files with names that would conflict on a case-insensitive
-    # filesystem like MacOS HFS+ or Windows FAT.
     -   id: check-case-conflict
     -   id: check-json
     -   id: check-yaml
