@@ -11,5 +11,5 @@ Who should read it? - Mostly, it will be I who will refer to these notes. But if
 The order to read should be as follows -
 1. image_classifier.py - It's a nice one to go through to get an idea of Pytorch's ease of use
 2. cycle_gan.py - A few more advanced networks (all are prebuilt and loaded from disk, no getting into training yet!)
-3. tensor_tutorial.py - This is where the deep dives start, I cover everything required to jump onto more advanced stuff
+3. tensors_1.py - This is where the deep dives start, I cover everything required to jump onto more advanced stuff
 like named tensors, underlying storage objects, serialization/deserialization etc.
