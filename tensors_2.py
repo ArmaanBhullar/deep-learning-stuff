@@ -2,6 +2,8 @@
 This module shows how to represent various types of datasets as Tensors
 """
 import os
+import pandas as pd
+import numpy as np
 import torch
 import imageio
 
@@ -71,3 +73,31 @@ for i in range(3):  # Now we've already divided all by 256 but it doesn't matter
 # There are several other operations on inputs, such as geometric transformations like rotations, scaling,
 # and cropping. These may help with training or may be required to make an arbitrary input conform to the input
 # requirements of a network, like the size of the image.
+
+
+#########
+# Volumetric Images - CT Scans etc.
+#########
+
+# There’s no fundamental difference between a tensor storing volumetric data versus image data. We just have an extra
+# dimension, depth, after the channel dimension, leading to a 5D tensor of shape N × C × D × H × W. Let’s load a
+# sample CT scan using the volread function in the imageio module, which takes a directory as an argument and
+# assembles all Digital Imaging and Communications in Medicine (DICOM) files2 in a series in a NumPy 3D array
+
+vol_arr = torch.from_numpy(
+    imageio.volread(r"./data/volumetric-dicom/2-LUNG 3.0  B70f-04083", format="DICOM")
+)
+print(vol_arr.shape)
+# Now , we gotta make it conform Channel x depth x height x width
+# add a channel
+vol_arr = torch.unsqueeze(vol_arr, dim=0)  # Insert one more dimension at 0th position
+print(vol_arr.shape)
+
+# That's it!
+
+#########
+# Tabular Data
+#########
+df = pd.read_csv("./data/tabular-wine/winequality-white.csv", sep=";", dtype=np.float32)
+wineeq = torch.from_numpy(df.to_numpy())
+print(wineeq.shape, wineeq.dtype)
