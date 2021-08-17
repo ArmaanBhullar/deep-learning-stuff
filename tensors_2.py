@@ -101,3 +101,113 @@ print(vol_arr.shape)
 df = pd.read_csv("./data/tabular-wine/winequality-white.csv", sep=";", dtype=np.float32)
 wineeq = torch.from_numpy(df.to_numpy())
 print(wineeq.shape, wineeq.dtype)
+
+data = wineeq[:, :-1]
+target = wineeq[:, -1].long()
+
+print(data.shape, target.shape)
+# print(target.unsqueeze(1).shape)
+# Observe there are 10 values in target, we can either use them as a score or encode one hot vectors instead
+print(target)
+onehot_target = torch.zeros(target.shape[0], 10)
+onehot_target.scatter_(dim=1, index=target.unsqueeze(1), value=1)
+print(onehot_target)
+print(torch.mean(onehot_target, dim=0))
+data_mean = torch.mean(data, dim=0)
+data_sd = torch.std(data, dim=0)
+data_normalized = (data - data_mean) / data_sd
+bad_data = data[target <= 3]
+okay_data = data[(target > 3) & (target < 7)]
+good_data = data[target >= 7]
+bad_mean = torch.mean(bad_data, dim=0)
+okay_mean = torch.mean(okay_data, dim=0)
+good_mean = torch.mean(good_data, dim=0)
+for col, b, o, g in zip(df.columns, bad_mean, okay_mean, good_mean):
+    print(f"{col} {b} {o} {g}")
+# Seems like higher total sulphur dioxide is the problem, let's manually build a quick model
+so2_threshold = 141.83
+predicted_indexes = data[:, 6] <= so2_threshold
+print(predicted_indexes.shape, predicted_indexes.dtype, predicted_indexes.sum())
+actual_indices = target > 5
+print(actual_indices.sum())
+hits = torch.sum(actual_indices & predicted_indexes).item()
+total_predicted = torch.sum(predicted_indexes).item()
+total_true = torch.sum(actual_indices).item()
+print(hits, total_predicted, total_true)
+print(f"Precision = {hits / total_predicted}\nRecall={hits / total_true}")
+
+##############
+# Time Series
+##############
+
+# In the source data, each row is a separate hour of data (figure 4.5 shows a transposed version of this to better
+# fit on the printed page). We want to change the row-per-hour organization so that we have one axis that increases
+# at a rate of one day per index increment, and another axis that represents the hour of the day (independent of the
+# date). The third axis will be our different columns of data (weather, temperature, and so on).
+
+
+# TODO below code gives wrong number of channels - fix this df = pd.read_csv(
+#  './data/bike-sharing-dataset/hour-fixed.csv', dtype=np.float32, skiprows=0, converters={1: lambda x: float(x[
+#  8:10])}) bikes = torch.from_numpy(df.values) print(df.head()) print(bikes.shape, bikes.stride())
+
+# Below works fine though
+bikes_numpy = np.loadtxt(
+    "./data/bike-sharing-dataset/hour-fixed.csv",
+    dtype=np.float32,
+    delimiter=",",
+    skiprows=1,
+    converters={1: lambda x: float(x[8:10])},
+)
+bikes = torch.from_numpy(bikes_numpy)
+print(bikes.shape, bikes.stride())
+daily_bikes = bikes.view(-1, 24, bikes.shape[1])  # Might as well be 730, 24, 17
+print(daily_bikes.shape, daily_bikes.stride())
+
+# Where we want to go? - N x C x L
+# What we have? - N sequences of L hours in a day, for C channels
+# Gotta transpose this, boss
+daily_bikes = daily_bikes.transpose(1, 2)  # interchange 1 and 2 dimension
+
+
+####################
+# Text Data
+####################
+with open("./data/jane-austen/1342-0.txt", encoding="utf8") as f:
+    text = f.read()
+lines = text.split("\n")
+line = lines[200]
+print(line)
+letter_t = torch.zeros(
+    len(line), 128
+)  # 128 because we only care about ASCII characters, 256 for UTF-8
+
+for i, letter in enumerate(line.lower().strip()):
+    letter_index = (
+        ord(letter) if ord(letter) < 128 else 0
+    )  # Return the Unicode code point for a one-character string
+    letter_t[i][letter_index] = 1
+
+# That's it! We've encoded one sentence's characters
+print(letter_t)
+
+
+def clean_words(input_str):
+    punctuation = '.,;:"!?”“_-'
+    word_list = input_str.lower().replace("\n", " ").split()
+    word_list = [word.strip(punctuation) for word in word_list]
+    return word_list
+
+
+words_in_line = clean_words(line)
+print(line, words_in_line)
+
+word_list = sorted(set(clean_words(text)))
+word2index_dict = {word: i for (i, word) in enumerate(word_list)}
+print(len(word2index_dict), word2index_dict["impossible"])
+
+word_t = torch.zeros(len(words_in_line), len(word2index_dict))
+for i, word in enumerate(words_in_line):
+    word_index = word2index_dict[word]
+    word_t[i][word_index] = 1
+    print("{:2} {:4} {}".format(i, word_index, word))
+print(word_t.shape)
